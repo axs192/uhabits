@@ -179,12 +179,9 @@
         </Preference>
 
         <Preference
+                android:key="about"
                 android:title="@string/about"
                 app:iconSpaceReserved="false">
-            <intent
-                    android:action="android.intent.action.VIEW"
-                    android:targetClass="org.isoron.uhabits.activities.about.AboutActivity"
-                    android:targetPackage="org.isoron.uhabits" />
         </Preference>
 
     </PreferenceCategory>
