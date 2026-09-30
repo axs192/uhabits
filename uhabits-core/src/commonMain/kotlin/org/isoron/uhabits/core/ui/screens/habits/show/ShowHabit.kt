@@ -28,6 +28,8 @@ import org.isoron.uhabits.core.ui.screens.habits.show.views.BarCardPresenter
 import org.isoron.uhabits.core.ui.screens.habits.show.views.BarCardState
 import org.isoron.uhabits.core.ui.screens.habits.show.views.FrequencyCardPresenter
 import org.isoron.uhabits.core.ui.screens.habits.show.views.FrequencyCardState
+import org.isoron.uhabits.core.ui.screens.habits.show.views.GoalCardPresenter
+import org.isoron.uhabits.core.ui.screens.habits.show.views.GoalCardState
 import org.isoron.uhabits.core.ui.screens.habits.show.views.HistoryCardPresenter
 import org.isoron.uhabits.core.ui.screens.habits.show.views.HistoryCardState
 import org.isoron.uhabits.core.ui.screens.habits.show.views.NotesCardPresenter
@@ -47,11 +49,13 @@ import org.isoron.uhabits.core.ui.views.Theme
 data class ShowHabitState(
     val title: String = "",
     val isNumerical: Boolean = false,
+    val isGoal: Boolean = false,
     val color: PaletteColor = PaletteColor(1),
     val subtitle: SubtitleCardState,
     val overview: OverviewCardState,
     val notes: NotesCardState,
     val target: TargetCardState,
+    val goal: GoalCardState,
     val streaks: StreakCardState,
     val scores: ScoreCardState,
     val frequency: FrequencyCardState,
@@ -95,6 +99,7 @@ class ShowHabitPresenter(
                 title = habit.name,
                 color = habit.color,
                 isNumerical = habit.isNumerical,
+                isGoal = habit.isGoal,
                 theme = theme,
                 subtitle = SubtitleCardPresenter.buildState(
                     habit = habit,
@@ -110,6 +115,10 @@ class ShowHabitPresenter(
                 target = TargetCardPresenter.buildState(
                     habit = habit,
                     firstWeekday = preferences.firstWeekdayInt,
+                    theme = theme
+                ),
+                goal = GoalCardPresenter.buildState(
+                    habit = habit,
                     theme = theme
                 ),
                 streaks = StreakCartPresenter.buildState(

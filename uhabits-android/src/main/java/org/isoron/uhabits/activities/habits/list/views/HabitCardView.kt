@@ -40,6 +40,8 @@ import org.isoron.platform.time.LocalDate
 import org.isoron.platform.time.getToday
 import org.isoron.uhabits.R
 import org.isoron.uhabits.activities.common.views.RingView
+import org.isoron.uhabits.core.models.GoalProgress
+import org.isoron.uhabits.core.models.GoalStatus
 import org.isoron.uhabits.core.models.Habit
 import org.isoron.uhabits.core.models.ModelObservable
 import org.isoron.uhabits.core.ui.screens.habits.list.ListHabitsBehavior
@@ -128,6 +130,7 @@ class HabitCardView(
     private var innerFrame: LinearLayout
     private var label: TextView
     private var scoreRing: RingView
+    private var goalStatusLabel: TextView
 
     private var currentToggleTaskId = 0
 
@@ -183,6 +186,18 @@ class HabitCardView(
             }
         }
 
+        goalStatusLabel = TextView(context).apply {
+            visibility = GONE
+            gravity = Gravity.CENTER
+            val padding = dp(16f).toInt()
+            setPadding(padding, 0, padding, 0)
+            // Same height as the value buttons it replaces, so the card keeps its size
+            layoutParams = LinearLayout.LayoutParams(
+                WRAP_CONTENT,
+                resources.getDimensionPixelSize(R.dimen.checkmarkHeight)
+            )
+        }
+
         innerFrame = LinearLayout(context).apply {
             gravity = Gravity.CENTER_VERTICAL
             orientation = LinearLayout.HORIZONTAL
@@ -193,6 +208,7 @@ class HabitCardView(
             addView(label)
             addView(checkmarkPanel)
             addView(numberPanel)
+            addView(goalStatusLabel)
 
             setOnTouchListener { v, event ->
                 v.background.setHotspot(event.x, event.y)
@@ -272,9 +288,19 @@ class HabitCardView(
         }
 
         val c = getActiveColor(h)
+        val goalStatus = if (h.isGoal) GoalProgress.compute(h, getToday())?.status else null
+        val isEndedGoal = goalStatus == GoalStatus.ACHIEVED || goalStatus == GoalStatus.NOT_ACHIEVED
         label.apply {
             text = h.name
-            setTextColor(c)
+            setTextColor(if (isEndedGoal) sres.getColor(R.attr.contrast60) else c)
+        }
+        goalStatusLabel.apply {
+            visibility = if (isEndedGoal) View.VISIBLE else View.GONE
+            text = when (goalStatus) {
+                GoalStatus.ACHIEVED -> resources.getString(R.string.goal_status_achieved)
+                else -> resources.getString(R.string.goal_status_not_achieved)
+            }
+            setTextColor(if (goalStatus == GoalStatus.ACHIEVED) c else sres.getColor(R.attr.contrast60))
         }
         scoreRing.apply {
             setColor(c)
@@ -291,9 +317,17 @@ class HabitCardView(
             units = h.unit
             targetType = h.targetType
             threshold = h.targetValue
-            visibility = when (h.isNumerical) {
-                true -> View.VISIBLE
-                false -> View.GONE
+            // Goals colour each day against that day's stage; days outside the goal are never met
+            thresholdProvider = when (h.isGoal) {
+                true -> { date ->
+                    if (h.isActiveOn(date)) h.targetValueOn(date) / h.frequency.denominator else Double.MAX_VALUE
+                }
+                false -> null
+            }
+            visibility = when {
+                isEndedGoal -> View.GONE
+                h.isNumerical -> View.VISIBLE
+                else -> View.GONE
             }
         }
     }

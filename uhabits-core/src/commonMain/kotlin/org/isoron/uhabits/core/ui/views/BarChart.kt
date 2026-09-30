@@ -38,6 +38,12 @@ class BarChart(
     var series = mutableListOf<List<Double>>()
     var colors = mutableListOf<Color>()
     var axis = listOf<LocalDate>()
+
+    /**
+     * Optional target for each data column, drawn as a stepped line over the
+     * bars. Indexed like [axis].
+     */
+    var targets = listOf<Double>()
     override var dataOffset = 0
 
     // Style
@@ -65,6 +71,7 @@ class BarChart(
         val maxBarHeight = height - footerHeight - paddingTop
         var maxValue = series.map { it.maxOrNull()!! }.maxOrNull()!!
         maxValue = max(maxValue, 1.0)
+        maxValue = max(maxValue, targets.maxOrNull() ?: 0.0)
 
         canvas.setColor(theme.cardBackgroundColor)
         canvas.fill()
@@ -179,8 +186,27 @@ class BarChart(
             }
         }
 
+        fun drawTargets() {
+            canvas.setColor(theme.mediumContrastTextColor)
+            canvas.setStrokeWidth(2.0)
+            var prevY: Double? = null
+            for (c in 0 until nColumns) {
+                val dataColumn = nColumns - c - 1 + dataOffset
+                if (dataColumn < 0 || dataColumn >= targets.size) {
+                    prevY = null
+                    continue
+                }
+                val x = barGroupOffset(c)
+                val y = height - footerHeight - round(maxBarHeight * targets[dataColumn] / maxValue)
+                canvas.drawLine(x, y, x + barGroupWidth, y)
+                if (prevY != null && prevY != y) canvas.drawLine(x, prevY, x, y)
+                prevY = y
+            }
+        }
+
         drawMajorGrid()
         for (k in 0 until nSeries) drawSeries(k)
         drawAxis()
+        if (targets.isNotEmpty()) drawTargets()
     }
 }

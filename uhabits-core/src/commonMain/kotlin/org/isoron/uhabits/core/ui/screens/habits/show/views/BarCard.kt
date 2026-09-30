@@ -34,7 +34,8 @@ data class BarCardState(
     val color: PaletteColor,
     val entries: List<Entry>,
     val isNumerical: Boolean,
-    val numericalSpinnerPosition: Int
+    val numericalSpinnerPosition: Int,
+    val targets: List<Double> = listOf()
 )
 
 class BarCardPresenter(
@@ -59,11 +60,18 @@ class BarCardPresenter(
             }
             val today = getToday()
             val oldest = habit.computedEntries.getKnown().lastOrNull()?.date ?: today
+            val truncateField = ScoreCardPresenter.getTruncateField(bucketSize)
             val entries = habit.computedEntries.getByInterval(oldest, today).groupedSum(
-                truncateField = ScoreCardPresenter.getTruncateField(bucketSize),
+                truncateField = truncateField,
                 firstWeekday = firstWeekday,
                 isNumerical = habit.isNumerical
             )
+            val targets = when {
+                habit.isGoal -> entries.map {
+                    habit.goalTargetOverDays(it.date, periodLength(it.date, truncateField))
+                }
+                else -> listOf()
+            }
             return BarCardState(
                 theme = theme,
                 entries = entries,
@@ -71,7 +79,8 @@ class BarCardPresenter(
                 color = habit.color,
                 isNumerical = habit.isNumerical,
                 numericalSpinnerPosition = numericalSpinnerPosition,
-                boolSpinnerPosition = boolSpinnerPosition
+                boolSpinnerPosition = boolSpinnerPosition,
+                targets = targets
             )
         }
     }

@@ -60,6 +60,16 @@ class NumberPanelView(
             setupButtons()
         }
 
+    /**
+     * Returns the threshold that applies on a given date. When null, the same
+     * [threshold] applies to every date.
+     */
+    var thresholdProvider: ((LocalDate) -> Double)? = null
+        set(value) {
+            field = value
+            setupButtons()
+        }
+
     var color = 0
         set(value) {
             field = value
@@ -102,7 +112,7 @@ class NumberPanelView(
             }
             button.color = color
             button.targetType = targetType
-            button.threshold = threshold
+            button.threshold = thresholdProvider?.invoke(date) ?: threshold
             button.units = units
             button.onEdit = { onEdit(date) }
         }
