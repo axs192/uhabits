@@ -55,7 +55,7 @@ android {
         versionName = "2.3.1"
         minSdk = 28
         targetSdk = 36
-        applicationId = "org.isoron.uhabits"
+        applicationId = "io.github.axs192.uhabits"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
