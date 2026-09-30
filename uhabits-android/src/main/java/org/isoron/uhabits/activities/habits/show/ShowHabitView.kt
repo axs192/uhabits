@@ -48,6 +48,7 @@ class ShowHabitView(context: Context) : FrameLayout(context) {
         binding.overviewCard.setState(data.overview)
         binding.notesCard.setState(data.notes)
         binding.targetCard.setState(data.target)
+        binding.goalCard.setState(data.goal)
         binding.streakCard.setState(data.streaks)
         binding.scoreCard.setState(data.scores)
         binding.frequencyCard.setState(data.frequency)
@@ -58,6 +59,8 @@ class ShowHabitView(context: Context) : FrameLayout(context) {
         } else {
             binding.targetCard.visibility = GONE
         }
+        // Goals are finite: calendar-period targets don't apply to them
+        if (data.isGoal) binding.targetCard.visibility = GONE
         binding.linearLayout.applyBottomInset()
     }
 

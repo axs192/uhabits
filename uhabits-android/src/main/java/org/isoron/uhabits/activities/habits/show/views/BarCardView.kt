@@ -42,6 +42,7 @@ class BarCardView(context: Context, attrs: AttributeSet) : LinearLayout(context,
             series = mutableListOf(state.entries.map { it.value / 1000.0 })
             colors = mutableListOf(theme.color(state.color.paletteIndex))
             axis = state.entries.map { it.date }
+            targets = state.targets
         }
         binding.chart.resetDataOffset()
         binding.chart.postInvalidate()
