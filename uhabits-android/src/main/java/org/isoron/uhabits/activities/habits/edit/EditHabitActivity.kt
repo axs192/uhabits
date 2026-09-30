@@ -338,7 +338,8 @@ class EditHabitActivity : AppCompatActivity() {
             if (isProgressive) {
                 val values = stageRows.map { it.stageInput.text.toString().toDouble() }
                 habit.targetSchedule = TargetSchedule(scheduleStart, stageLength, values)
-                habit.targetValue = values.first()
+                // An existing habit keeps its fixed target for dates before the schedule starts
+                if (original == null) habit.targetValue = values.first()
             } else {
                 habit.targetSchedule = null
                 habit.targetValue = binding.targetInput.text.toString().toDouble()
