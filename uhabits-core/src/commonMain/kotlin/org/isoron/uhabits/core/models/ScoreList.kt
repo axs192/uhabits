@@ -70,7 +70,8 @@ class ScoreList {
         targetValue: Double,
         computedEntries: EntryList,
         from: LocalDate,
-        to: LocalDate
+        to: LocalDate,
+        targetSchedule: TargetSchedule? = null
     ) {
         map.clear()
         var rollingSum = 0.0
@@ -92,6 +93,7 @@ class ScoreList {
         for (i in values.indices) {
             val offset = values.size - i - 1
             if (isNumerical) {
+                val targetValue = targetSchedule?.valueOn(from.plus(i), targetValue) ?: targetValue
                 rollingSum += max(0, values[offset])
                 if (offset + denominator < values.size) {
                     rollingSum -= max(0, values[offset + denominator])

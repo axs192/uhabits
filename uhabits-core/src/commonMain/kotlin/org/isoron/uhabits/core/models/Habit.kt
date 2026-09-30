@@ -18,6 +18,7 @@
  */
 package org.isoron.uhabits.core.models
 
+import org.isoron.platform.time.LocalDate
 import org.isoron.platform.time.getToday
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -41,7 +42,8 @@ data class Habit(
     val computedEntries: EntryList,
     val originalEntries: EntryList,
     val scores: ScoreList,
-    val streaks: StreakList
+    val streaks: StreakList,
+    var targetSchedule: TargetSchedule? = null
 ) {
     init {
         if (uuid == null) this.uuid = Uuid.random().toHexString()
@@ -57,12 +59,20 @@ data class Habit(
 
     fun hasReminder(): Boolean = reminder != null
 
+    /**
+     * Returns the target in force on the given date. For habits without a
+     * [targetSchedule], this is always [targetValue].
+     */
+    fun targetValueOn(date: LocalDate): Double {
+        return targetSchedule?.valueOn(date, targetValue) ?: targetValue
+    }
+
     fun isCompletedToday(): Boolean {
         val today = getToday()
         val value = computedEntries.get(today).value
         return if (isNumerical) {
             when (targetType) {
-                NumericalHabitType.AT_LEAST -> value / 1000.0 >= targetValue
+                NumericalHabitType.AT_LEAST -> value / 1000.0 >= targetValueOn(today)
                 NumericalHabitType.AT_MOST -> false
             }
         } else {
@@ -96,7 +106,8 @@ data class Habit(
             targetValue = targetValue,
             computedEntries = computedEntries,
             from = from,
-            to = to
+            to = to,
+            targetSchedule = targetSchedule
         )
 
         streaks.recompute(
@@ -105,7 +116,8 @@ data class Habit(
             to,
             isNumerical,
             targetValue,
-            targetType
+            targetType,
+            targetSchedule
         )
     }
 
@@ -119,6 +131,7 @@ data class Habit(
         this.position = other.position
         this.question = other.question
         this.reminder = other.reminder
+        this.targetSchedule = other.targetSchedule
         this.targetType = other.targetType
         this.targetValue = other.targetValue
         this.type = other.type
@@ -139,6 +152,7 @@ data class Habit(
         if (position != other.position) return false
         if (question != other.question) return false
         if (reminder != other.reminder) return false
+        if (targetSchedule != other.targetSchedule) return false
         if (targetType != other.targetType) return false
         if (targetValue != other.targetValue) return false
         if (type != other.type) return false
@@ -158,6 +172,7 @@ data class Habit(
         result = 31 * result + position
         result = 31 * result + question.hashCode()
         result = 31 * result + (reminder?.hashCode() ?: 0)
+        result = 31 * result + (targetSchedule?.hashCode() ?: 0)
         result = 31 * result + targetType.value
         result = 31 * result + targetValue.hashCode()
         result = 31 * result + type.value
