@@ -34,35 +34,26 @@ class GoalWidget(
         val widgetView = view as GraphWidgetView
         widgetView.setBackgroundAlpha(preferedBackgroundAlpha)
         if (preferedBackgroundAlpha >= 255) widgetView.setShadowAlpha(0x4f)
-        val state = GoalCardPresenter.buildState(habit, WidgetTheme())
+        val theme = WidgetTheme()
+        val state = GoalCardPresenter.buildState(habit, theme)
         val res = context.resources
         widgetView.setTitle(
             when (state.status) {
-                GoalStatus.IN_PROGRESS -> res.getString(R.string.goal_widget_title_days_left, habit.name, state.daysLeft)
-                GoalStatus.ACHIEVED -> res.getString(R.string.goal_widget_title_status, habit.name, res.getString(R.string.goal_status_achieved))
-                GoalStatus.NOT_ACHIEVED -> res.getString(R.string.goal_widget_title_status, habit.name, res.getString(R.string.goal_status_not_achieved))
-                GoalStatus.NOT_STARTED -> habit.name
+                GoalStatus.ACHIEVED -> res.getString(R.string.goal_widget_title_achieved, habit.name)
+                GoalStatus.NOT_ACHIEVED -> res.getString(R.string.goal_widget_title_not_achieved, habit.name)
+                else -> habit.name
             }
         )
 
-        val labels = mutableListOf<String>()
-        val values = mutableListOf<Double>()
-        val targets = mutableListOf<Double>()
-        if (state.stageNumber > 0) {
-            val labelRes = if (state.stageLength == 7) R.string.schedule_week_n else R.string.schedule_stage_n
-            labels.add(res.getString(labelRes, state.stageNumber))
-            values.add(state.stageActuals[state.stageNumber - 1])
-            targets.add(state.stageTargets[state.stageNumber - 1])
-        }
-        labels.add(res.getString(R.string.goal_total))
-        values.add(state.totalActual)
-        targets.add(state.totalTarget)
-
+        // Two rows: what's done (highlighted in the habit colour) and the days used,
+        // whose remainder is the number of days left
         val chart = widgetView.dataView as TargetChart
-        chart.setColor(WidgetTheme().color(habit.color).toInt())
-        chart.setTargets(targets)
-        chart.setLabels(labels)
-        chart.setValues(values)
+        chart.setColor(theme.color(habit.color).toInt())
+        chart.setBarColors(listOf(theme.color(habit.color).toInt(), theme.mediumContrastTextColor.toInt()))
+        chart.setAlwaysShowCompleted(true)
+        chart.setLabels(listOf(res.getString(R.string.goal_total), res.getString(R.string.goal_widget_days)))
+        chart.setTargets(listOf(state.totalTarget, state.goalLengthDays.toDouble()))
+        chart.setValues(listOf(state.totalActual, state.daysUsed.toDouble()))
     }
 
     override fun buildView(): View {

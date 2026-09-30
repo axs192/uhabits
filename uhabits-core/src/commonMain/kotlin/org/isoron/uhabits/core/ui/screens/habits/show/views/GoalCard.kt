@@ -29,7 +29,15 @@ data class GoalCardState(
     val totalActual: Double = 0.0,
     val stagesMet: Int = 0,
     val unit: String = ""
-)
+) {
+    /** Number of days from the goal's start to its end. */
+    val goalLengthDays: Int
+        get() = stageCount * stageLength
+
+    /** Days of the goal already behind us; together with [daysLeft] this makes [goalLengthDays]. */
+    val daysUsed: Int
+        get() = goalLengthDays - daysLeft
+}
 
 class GoalCardPresenter {
     companion object {
