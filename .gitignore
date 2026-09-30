@@ -20,3 +20,23 @@ crowdin.yml
 kotlin-js-store
 *.md
 .kotlin
+
+# Fork additions. This is a public repo: signing material and credentials must
+# live outside the working tree; these patterns are a second line of defence.
+*.jks
+*.keystore
+*.p12
+*.pem
+key.properties
+keystore.properties
+signing.properties
+google-services.json
+.env
+.env.*
+*.env
+*.apk
+*.aab
+gitleaks-report.*
+.claude/settings.local.json
+.vscode/
+!CLAUDE.md

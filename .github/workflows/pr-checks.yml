@@ -1,0 +1,80 @@
+name: PR Checks
+
+# Required checks on every PR into dev. GitHub-hosted runners only: this is a
+# public repo, so a self-hosted runner would execute code from anyone's fork PR.
+on:
+  pull_request:
+    branches: [dev]
+
+concurrency:
+  group: pr-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install gitleaks
+        run: |
+          curl -sSfL -o gitleaks.tar.gz \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz
+          echo "ba6dbb656933921c775ee5a2d1c13a91046e7952e9d919f9bac4cec61d628e7d  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz -C "$RUNNER_TEMP" gitleaks
+
+      - name: Scan history for committed secrets
+        run: "$RUNNER_TEMP/gitleaks detect --source . --redact --no-banner -v"
+
+  lint-and-test:
+    name: Lint & core tests (JVM)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: ktlint
+        run: ./gradlew ktlintCheck --stacktrace
+
+      - name: Core unit tests
+        run: ./gradlew :uhabits-core:jvmTest --stacktrace
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core-test-report
+          path: uhabits-core/build/reports/tests/jvmTest
+          retention-days: 14
+          if-no-files-found: ignore
+
+  build:
+    name: Debug build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Debug build
+        run: ./gradlew :uhabits-android:assembleDebug --stacktrace

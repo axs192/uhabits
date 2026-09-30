@@ -1,0 +1,44 @@
+# Install with: pre-commit install --hook-type pre-commit --hook-type pre-push
+default_install_hook_types: [pre-commit, pre-push]
+default_stages: [pre-commit]
+
+repos:
+  - repo: local
+    hooks:
+      - id: noreply-email
+        name: commit email is a GitHub noreply address
+        language: system
+        entry: bash -c 'git config user.email | grep -q "@users\.noreply\.github\.com$" || { echo "user.email must be a users.noreply.github.com address (public repo)"; exit 1; }'
+        pass_filenames: false
+        always_run: true
+
+      - id: gitleaks-staged
+        name: gitleaks (staged changes)
+        language: system
+        entry: gitleaks protect --staged --redact --no-banner -v
+        pass_filenames: false
+        always_run: true
+
+      - id: gitleaks-history
+        name: gitleaks (full history)
+        language: system
+        entry: gitleaks detect --source . --redact --no-banner -v
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: gradle-checks
+        name: ktlint + core JVM tests
+        language: system
+        entry: ./gradlew ktlintCheck :uhabits-core:jvmTest
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: detect-private-key
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1024]
