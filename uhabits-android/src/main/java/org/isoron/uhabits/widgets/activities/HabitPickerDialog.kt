@@ -44,6 +44,12 @@ class NumericalHabitPickerDialog : HabitPickerDialog() {
     override fun getEmptyMessage() = R.string.no_numerical_habits
 }
 
+class GoalPickerDialog : HabitPickerDialog() {
+    override fun shouldHideBoolean() = true
+    override fun shouldHideNonGoals() = true
+    override fun getEmptyMessage() = R.string.no_goals
+}
+
 open class HabitPickerDialog : Activity() {
 
     private var widgetId = 0
@@ -52,6 +58,7 @@ open class HabitPickerDialog : Activity() {
 
     protected open fun shouldHideNumerical() = false
     protected open fun shouldHideBoolean() = false
+    protected open fun shouldHideNonGoals() = false
     protected open fun getEmptyMessage() = R.string.no_habits
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,6 +76,7 @@ open class HabitPickerDialog : Activity() {
             if (h.isArchived) continue
             if (h.isNumerical and shouldHideNumerical()) continue
             if (!h.isNumerical and shouldHideBoolean()) continue
+            if (!h.isGoal and shouldHideNonGoals()) continue
             habitIds.add(h.id!!)
             habitNames.add(h.name)
         }
