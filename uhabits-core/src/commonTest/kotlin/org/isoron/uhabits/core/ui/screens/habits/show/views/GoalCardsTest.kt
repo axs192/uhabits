@@ -58,6 +58,23 @@ class GoalCardsTest : BaseUnitTest() {
     }
 
     @Test
+    fun testGoalCard_daysUsed() {
+        var state = GoalCardPresenter.buildState(goal, theme)
+        assertEquals(21, state.goalLengthDays)
+        assertEquals(13, state.daysUsed)
+
+        goal.targetSchedule = TargetSchedule(today.plus(2), 7, listOf(10.0, 20.0, 30.0))
+        goal.recompute()
+        state = GoalCardPresenter.buildState(goal, theme)
+        assertEquals(0, state.daysUsed)
+
+        goal.targetSchedule = TargetSchedule(today.minus(30), 7, listOf(10.0, 20.0, 30.0))
+        goal.recompute()
+        state = GoalCardPresenter.buildState(goal, theme)
+        assertEquals(21, state.daysUsed)
+    }
+
+    @Test
     fun testGoalCard_hiddenForHabits() {
         val habit = fixtures.createNumericalHabit()
         assertFalse(GoalCardPresenter.buildState(habit, theme).isVisible)

@@ -216,6 +216,10 @@
     <string name="goal_header_not_started">Starts %1$s</string>
     <string name="goal_header_ended">%1$s: %2$s of %3$s, %4$d of %5$d stages met</string>
     <string name="goal_total">Total</string>
+    <string name="goal_widget_title_achieved">%1$s ✓</string>
+    <string name="goal_widget_title_not_achieved">%1$s ✗</string>
+    <string name="goal_widget_days">Days</string>
+    <string name="no_goals">No goals found</string>
     <string name="example_question_boolean">e.g. Did you exercise today?</string>
     <string name="question">Question</string>
     <string name="target">Target</string>

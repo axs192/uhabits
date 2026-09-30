@@ -46,6 +46,8 @@ class TargetChart : View {
     private var values = emptyList<Double>()
     private var labels = emptyList<String>()
     private var targets = emptyList<Double>()
+    private var barColors: List<Int>? = null
+    private var alwaysShowCompleted = false
     private var maxLabelSize = 0f
     private var tinyTextSize = 0f
 
@@ -130,7 +132,8 @@ class TargetChart : View {
             completedWidth = 2 * round
         }
         val remainingWidth = barRect.width() - completedWidth
-        paint!!.color = primaryColor
+        val barColor = barColors?.getOrNull(row) ?: primaryColor
+        paint!!.color = barColor
         barRect[barRect.left, barRect.top, barRect.left + completedWidth] = barRect.bottom
         canvas.drawRoundRect(barRect, round, round, paint!!)
 
@@ -142,7 +145,8 @@ class TargetChart : View {
         val remaining = targets[row] - values[row]
         val completedText = values[row].toShortString()
         val remainingText = remaining.toShortString()
-        if (completedWidth > paint!!.measureText(completedText) + 2 * padding) {
+        val completedFits = completedWidth > paint!!.measureText(completedText) + 2 * padding
+        if (completedFits) {
             paint!!.color = highContrastReverseTextColor
             canvas.drawText(
                 completedText,
@@ -150,6 +154,23 @@ class TargetChart : View {
                 barRect.centerY() - yTextAdjust,
                 paint!!
             )
+        }
+        if (alwaysShowCompleted) {
+            // Both numbers are always shown: the completed one just after a narrow fill,
+            // the remaining one at the right end of the bar
+            val barEnd = rect.right - padding
+            if (!completedFits) {
+                paint!!.color = barColor
+                paint!!.textAlign = Paint.Align.LEFT
+                canvas.drawText(completedText, barRect.right + padding, barRect.centerY() - yTextAdjust, paint!!)
+            }
+            if (remaining > 0) {
+                paint!!.color = mediumContrastTextColor
+                paint!!.textAlign = Paint.Align.RIGHT
+                canvas.drawText(remainingText, barEnd - padding, barRect.centerY() - yTextAdjust, paint!!)
+            }
+            paint!!.textAlign = Paint.Align.CENTER
+            return
         }
         if (remainingWidth > paint!!.measureText(remainingText) + 2 * padding) {
             paint!!.color = mediumContrastTextColor
@@ -183,6 +204,23 @@ class TargetChart : View {
     fun setLabels(labels: List<String>) {
         this.labels = labels
         requestLayout()
+    }
+
+    /**
+     * Optional fill colour for each row, in place of the chart's single colour.
+     */
+    fun setBarColors(colors: List<Int>?) {
+        barColors = colors
+        postInvalidate()
+    }
+
+    /**
+     * When true, every row shows its completed amount (next to the fill when the
+     * fill is too narrow to hold it) and its remaining amount at the end of the bar.
+     */
+    fun setAlwaysShowCompleted(value: Boolean) {
+        alwaysShowCompleted = value
+        postInvalidate()
     }
 
     fun setTargets(targets: List<Double>) {
