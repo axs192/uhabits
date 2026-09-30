@@ -40,7 +40,8 @@ class StreakList {
         to: LocalDate,
         isNumerical: Boolean,
         targetValue: Double,
-        targetType: NumericalHabitType
+        targetType: NumericalHabitType,
+        targetSchedule: TargetSchedule? = null
     ) {
         list.clear()
         val dates = computedEntries
@@ -48,6 +49,7 @@ class StreakList {
             .filter {
                 val value = it.value
                 if (isNumerical) {
+                    val targetValue = targetSchedule?.valueOn(it.date, targetValue) ?: targetValue
                     when (targetType) {
                         NumericalHabitType.AT_LEAST -> value / 1000.0 >= targetValue
                         NumericalHabitType.AT_MOST -> value != Entry.UNKNOWN && value / 1000.0 <= targetValue

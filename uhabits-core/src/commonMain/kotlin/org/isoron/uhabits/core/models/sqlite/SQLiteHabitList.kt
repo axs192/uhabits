@@ -20,6 +20,7 @@ package org.isoron.uhabits.core.models.sqlite
 
 import me.tatarka.inject.annotations.Inject
 import org.isoron.platform.Synchronized
+import org.isoron.platform.time.LocalDate
 import org.isoron.uhabits.core.database.HabitData
 import org.isoron.uhabits.core.database.HabitRepository
 import org.isoron.uhabits.core.models.Frequency
@@ -31,6 +32,7 @@ import org.isoron.uhabits.core.models.ModelFactory
 import org.isoron.uhabits.core.models.NumericalHabitType
 import org.isoron.uhabits.core.models.PaletteColor
 import org.isoron.uhabits.core.models.Reminder
+import org.isoron.uhabits.core.models.TargetSchedule
 import org.isoron.uhabits.core.models.WeekdayList
 import org.isoron.uhabits.core.models.memory.MemoryHabitList
 
@@ -231,7 +233,10 @@ class SQLiteHabitList(private val modelFactory: ModelFactory) : HabitList() {
                 targetValue = habit.targetValue,
                 targetType = habit.targetType.value,
                 unit = habit.unit,
-                uuid = habit.uuid
+                uuid = habit.uuid,
+                targetScheduleStart = habit.targetSchedule?.start?.unixTime,
+                targetScheduleStageLength = habit.targetSchedule?.stageLength,
+                targetScheduleValues = habit.targetSchedule?.serializeValues()
             )
         }
 
@@ -256,6 +261,15 @@ class SQLiteHabitList(private val modelFactory: ModelFactory) : HabitList() {
                     WeekdayList(data.reminderDays)
                 )
             }
+            habit.targetSchedule = buildTargetSchedule(data)
+        }
+
+        private fun buildTargetSchedule(data: HabitData): TargetSchedule? {
+            val start = data.targetScheduleStart ?: return null
+            val stageLength = data.targetScheduleStageLength ?: return null
+            val values = TargetSchedule.parseValues(data.targetScheduleValues ?: return null)
+            if (stageLength <= 0 || values.isEmpty()) return null
+            return TargetSchedule(LocalDate.fromUnixTime(start), stageLength, values)
         }
     }
 }
