@@ -42,6 +42,21 @@ class TargetSchedulePersistenceTest : BaseUnitTest() {
     }
 
     @Test
+    fun testGoalSurvivesSaveAndReload() = runTest {
+        val factory = SQLModelFactory(buildMemoryDatabase())
+        val list = SQLiteHabitList(factory)
+        val goal = factory.buildHabit()
+        goal.name = "Pushups goal"
+        goal.type = HabitType.GOAL
+        goal.targetSchedule = schedule
+        list.add(goal)
+
+        val reloaded = SQLiteHabitList(factory).getById(goal.id!!)!!
+        assertEquals(HabitType.GOAL, reloaded.type)
+        assertEquals(schedule, reloaded.targetSchedule)
+    }
+
+    @Test
     fun testScheduleCanBeUpdatedAndCleared() = runTest {
         val factory = SQLModelFactory(buildMemoryDatabase())
         val list = SQLiteHabitList(factory)

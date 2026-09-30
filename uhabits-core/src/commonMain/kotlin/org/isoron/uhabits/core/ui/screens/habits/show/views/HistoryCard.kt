@@ -165,8 +165,8 @@ class HistoryCardPresenter(
                     when {
                         it.value == Entry.UNKNOWN -> OFF
                         it.value == SKIP -> HATCHED
-                        (habit.targetType == AT_MOST) && (it.value / 1000.0 <= habit.targetValue) -> ON
-                        (habit.targetType == AT_LEAST) && (it.value / 1000.0 >= habit.targetValue) -> ON
+                        (habit.targetType == AT_MOST) && (it.value / 1000.0 <= habit.targetValueOn(it.date)) -> ON
+                        (habit.targetType == AT_LEAST) && (it.value / 1000.0 >= habit.targetValueOn(it.date)) -> ON
                         else -> GREY
                     }
                 }

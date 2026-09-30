@@ -51,8 +51,13 @@ data class Habit(
 
     var observable = ModelObservable()
 
+    /** True for measurable habits and goals, which both record amounts. */
     val isNumerical: Boolean
-        get() = type == HabitType.NUMERICAL
+        get() = type == HabitType.NUMERICAL || type == HabitType.GOAL
+
+    /** Goals are finite: they run from their schedule's start to its end. */
+    val isGoal: Boolean
+        get() = type == HabitType.GOAL
 
     val uriString: String
         get() = "content://org.isoron.uhabits/habit/$id"
@@ -67,9 +72,38 @@ data class Habit(
         return targetSchedule?.valueOn(date, targetValue) ?: targetValue
     }
 
+    /**
+     * Returns false for goal dates outside the goal's schedule. Habits are
+     * active on every date.
+     */
+    fun isActiveOn(date: LocalDate): Boolean {
+        if (!isGoal) return true
+        val schedule = targetSchedule ?: return true
+        return !date.isOlderThan(schedule.start) && !date.isNewerThan(schedule.endDate)
+    }
+
+    /**
+     * The value shown in the habit list's score ring. For goals, this is the
+     * fraction of the goal completed so far.
+     */
+    fun listScore(date: LocalDate): Double {
+        if (isGoal) GoalProgress.compute(this, date)?.let { return it.fraction }
+        return scores[date].value
+    }
+
     fun isCompletedToday(): Boolean {
         val today = getToday()
         val value = computedEntries.get(today).value
+        if (isGoal) {
+            val progress = GoalProgress.compute(this, today)
+            if (progress != null) {
+                return when (progress.status) {
+                    GoalStatus.ACHIEVED, GoalStatus.NOT_ACHIEVED -> true
+                    GoalStatus.NOT_STARTED -> false
+                    GoalStatus.IN_PROGRESS -> progress.stages[progress.currentStageIndex!!].isMet
+                }
+            }
+        }
         return if (isNumerical) {
             when (targetType) {
                 NumericalHabitType.AT_LEAST -> value / 1000.0 >= targetValueOn(today)
@@ -94,9 +128,15 @@ data class Habit(
         )
 
         val today = getToday()
-        val to = today.plus(30)
+        var to = today.plus(30)
         val entries = computedEntries.getKnown()
         var from = entries.lastOrNull()?.date ?: today
+        val schedule = targetSchedule
+        if (isGoal && schedule != null) {
+            // Goals are only judged within their own dates
+            from = schedule.start
+            if (schedule.endDate.isOlderThan(to)) to = schedule.endDate
+        }
         if (from.isNewerThan(to)) from = to
 
         scores.recompute(
