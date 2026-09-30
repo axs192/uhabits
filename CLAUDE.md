@@ -1,11 +1,30 @@
 # CLAUDE.md
 
-Personal fork of [Loop Habit Tracker](https://github.com/iSoron/uhabits) (`axs192/uhabits`, **public**), adding progressive targets for numerical habits. `origin` is the fork, `upstream` is `iSoron/uhabits`.
+Personal fork of [Loop Habit Tracker](https://github.com/iSoron/uhabits) (`axs192/uhabits`, **public**) that adds **goals**: finite, staged targets alongside Loop's open-ended habits. `origin` is the fork, `upstream` is `iSoron/uhabits`.
 
 ## Layout
 
 - `uhabits-core`: Kotlin Multiplatform (JVM + JS). Models, SQLite repositories and migrations (`assets/main/migrations/NN.sql`), importers, presenters (`ui/screens`) and chart drawing (`ui/views`). Most changes and nearly all tests live here.
 - `uhabits-android`: the Android shell. XML layouts, view binding, custom views, widgets. Consumes the core JVM target.
+
+## Goals (the fork's feature)
+
+- **Habits are indefinite; goals are finite.** A goal is `HabitType.GOAL` (stored as type `2`): a measurable habit (`isNumerical` is true) that always has a `TargetSchedule` (start date, stage length in days, one target per stage). It ends at `TargetSchedule.endDate`.
+- **Model** (`uhabits-core/.../models/`):
+  - `TargetSchedule` holds the stages; `Habit.targetValueOn(date)` returns the target in force on a date.
+  - `Habit.isActiveOn(date)` is false outside a goal's dates.
+  - `GoalProgress` reports per-stage actuals, totals and status. A goal is achieved when, after it ends, the total reaches the sum of the stage targets.
+  - For goals, scores and streaks are computed only within the goal's dates.
+- **Storage:** migration `26.sql` adds `target_schedule_*` columns to `Habits`, and `DATABASE_VERSION` is 26. Backups from the fork don't import into official Loop. If upstream ships its own migration 26, renumber ours when syncing.
+- **Semantics to keep:**
+  - A goal's `frequency` is `Frequency(1, stageLength)`, so a stage target is "per stage".
+  - Stages that last a whole number of weeks start on the first day of the week (`TargetSchedule.alignStart`).
+  - Measurable habits have no staged targets; don't reintroduce them there.
+- **UI:**
+  - Goal option in `HabitTypeDialog`, and a goal mode in `EditHabitActivity`.
+  - In the list, goal days are coloured per stage and an ended goal shows Achieved or Not achieved.
+  - `GoalCardView` on the habit page (the calendar Target card is hidden for goals), plus a stepped target line on the bar chart.
+  - `GoalWidget`: Total vs Days rows, picked through `GoalPickerDialog`.
 
 ## Workflow
 
@@ -28,6 +47,9 @@ Personal fork of [Loop Habit Tracker](https://github.com/iSoron/uhabits) (`axs19
 - Gradle CLI only; no Android Studio, no emulator. Instrumented (`androidTest`) tests are not part of the local loop.
 - Deploy target is a physical phone over wireless ADB. `adb` is not on PATH: use `~/Android/Sdk/platform-tools/adb`, pinned with `-s <id>` when more than one entry is listed.
 - On-device checks: prefer `adb shell uiautomator dump /sdcard/ui.xml 2>/dev/null` + grep over screenshots.
+- The phone is a Xiaomi (MIUI). `adb install` shows an on-screen confirmation that is cancelled (`INSTALL_FAILED_USER_RESTRICTED`) if the phone is locked; wake it, have the user unlock it, and ask them to tap Install.
+- When driving the UI with `adb shell input`, re-dump before every tap (coordinates move when the keyboard opens), and don't send BACK to hide the keyboard: with no keyboard up it leaves the screen. Use keyevent 111 (Escape).
+- In the manifest, class names in `meta-data` values must be fully qualified: Android resolves short names against the application ID, not the namespace.
 - The fork installs next to official Loop under its own application ID; builds are signed with `~/.android/debug.keystore`.
 
 ## Security (public repo)
