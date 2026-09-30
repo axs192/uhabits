@@ -14,6 +14,7 @@ import org.isoron.uhabits.core.BaseUnitTest
 import org.isoron.uhabits.core.models.Entry
 import org.isoron.uhabits.core.models.Frequency
 import org.isoron.uhabits.core.models.Habit
+import org.isoron.uhabits.core.models.HabitType
 import org.isoron.uhabits.core.models.NumericalHabitType
 import org.isoron.uhabits.core.models.TargetSchedule
 import org.isoron.uhabits.core.preferences.Preferences
@@ -64,6 +65,23 @@ class ScheduledTargetPresentersTest : BaseUnitTest() {
     fun testHistoryColoursEachDayAgainstItsOwnTarget() {
         val state = HistoryCardPresenter.buildState(habit, DayOfWeek.SUNDAY, LightTheme())
         assertEquals(List(7) { GREY } + List(7) { ON }, state.series)
+    }
+
+    @Test
+    fun testEditingAGoalAsksForANumber() {
+        habit.type = HabitType.GOAL
+        val behavior = ListHabitsBehavior(
+            habitList,
+            mock<ListHabitsBehavior.DirFinder>(),
+            taskRunner,
+            screen,
+            commandRunner,
+            mock<Preferences>(),
+            mock<ListHabitsBehavior.BugReporter>()
+        )
+        behavior.onEdit(habit, today, 0f, 0f)
+        verify { screen.showNumberPopup(10.0, "", any()) }
+        verify(VerifyMode.not) { screen.showCheckmarkPopup(any(), any(), any(), any()) }
     }
 
     @Test

@@ -27,7 +27,6 @@ import org.isoron.uhabits.core.commands.CreateRepetitionCommand
 import org.isoron.uhabits.core.models.Entry.Companion.YES_MANUAL
 import org.isoron.uhabits.core.models.Habit
 import org.isoron.uhabits.core.models.HabitList
-import org.isoron.uhabits.core.models.HabitType
 import org.isoron.uhabits.core.models.NumericalHabitType.AT_LEAST
 import org.isoron.uhabits.core.models.NumericalHabitType.AT_MOST
 import org.isoron.uhabits.core.models.PaletteColor
@@ -55,7 +54,7 @@ open class ListHabitsBehavior(
 
     open fun onEdit(habit: Habit, date: LocalDate, x: Float, y: Float) {
         val entry = habit.computedEntries.get(date)
-        if (habit.type == HabitType.NUMERICAL) {
+        if (habit.isNumerical) {
             val oldValue = entry.value.toDouble() / 1000
             screen.showNumberPopup(oldValue, entry.notes) { newValue: Double, newNotes: String ->
                 val value = (newValue * 1000).roundToInt()
