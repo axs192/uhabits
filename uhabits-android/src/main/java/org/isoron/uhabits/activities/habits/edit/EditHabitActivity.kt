@@ -142,7 +142,7 @@ class EditHabitActivity : AppCompatActivity() {
                 binding.targetOuterBox.visibility = View.GONE
                 binding.targetTypeOuterBox.visibility = View.GONE
             }
-            HabitType.NUMERICAL -> {
+            HabitType.NUMERICAL, HabitType.GOAL -> {
                 binding.nameInput.hint = getString(R.string.measurable_short_example)
                 binding.questionInput.hint = getString(R.string.measurable_question_example)
                 binding.frequencyOuterBox.visibility = View.GONE

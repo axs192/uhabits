@@ -304,7 +304,7 @@ class HabitCardListCache(
                 if (isCancelled) return
                 val habit = newData.habits[position]
                 if (targetId != null && targetId != habit.id) continue
-                newData.scores[habit.id] = habit.scores[today].value
+                newData.scores[habit.id] = habit.listScore(today)
                 val checkmarkList = mutableListOf<Int>()
                 val noteList = mutableListOf<String>()
                 for ((_, value, note) in habit.computedEntries.getByInterval(dateFrom, today)) {

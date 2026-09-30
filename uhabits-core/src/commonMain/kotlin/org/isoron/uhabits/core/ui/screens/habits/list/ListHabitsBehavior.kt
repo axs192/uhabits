@@ -61,8 +61,8 @@ open class ListHabitsBehavior(
                 val value = (newValue * 1000).roundToInt()
                 if (newValue != oldValue) {
                     if (
-                        (habit.targetType == AT_LEAST && newValue >= habit.targetValue) ||
-                        (habit.targetType == AT_MOST && newValue <= habit.targetValue)
+                        (habit.targetType == AT_LEAST && newValue >= habit.targetValueOn(date)) ||
+                        (habit.targetType == AT_MOST && newValue <= habit.targetValueOn(date))
                     ) {
                         screen.showConfetti(habit.color, x, y)
                     }

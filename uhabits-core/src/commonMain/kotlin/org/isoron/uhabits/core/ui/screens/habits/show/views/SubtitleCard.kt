@@ -19,6 +19,7 @@
 
 package org.isoron.uhabits.core.ui.screens.habits.show.views
 
+import org.isoron.platform.time.getToday
 import org.isoron.uhabits.core.models.Frequency
 import org.isoron.uhabits.core.models.Habit
 import org.isoron.uhabits.core.models.NumericalHabitType
@@ -49,7 +50,7 @@ class SubtitleCardPresenter {
             isNumerical = habit.isNumerical,
             question = habit.question,
             reminder = habit.reminder,
-            targetValue = habit.targetValue,
+            targetValue = habit.targetValueOn(getToday()),
             targetType = habit.targetType,
             unit = habit.unit,
             theme = theme

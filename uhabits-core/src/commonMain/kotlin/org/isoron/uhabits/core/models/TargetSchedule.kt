@@ -1,5 +1,6 @@
 package org.isoron.uhabits.core.models
 
+import org.isoron.platform.time.DayOfWeek
 import org.isoron.platform.time.LocalDate
 import kotlin.math.min
 
@@ -38,6 +39,10 @@ data class TargetSchedule(
 
     fun stageStart(index: Int): LocalDate = start.plus(index * stageLength)
 
+    /** The last day of the last stage. */
+    val endDate: LocalDate
+        get() = start.plus(values.size * stageLength - 1)
+
     /**
      * Returns the date on which the next stage begins, together with its
      * target, or null if the last stage has already been reached.
@@ -52,6 +57,16 @@ data class TargetSchedule(
 
     companion object {
         private const val SEPARATOR = ";"
+
+        /**
+         * Returns the start date to use for a schedule. Stages lasting a whole
+         * number of weeks start on the first day of the week, so that each
+         * calendar week falls within a single stage.
+         */
+        fun alignStart(date: LocalDate, stageLength: Int, firstWeekday: DayOfWeek): LocalDate {
+            if (stageLength % 7 != 0) return date
+            return date.startOfWeek(firstWeekday)
+        }
 
         fun parseValues(text: String): List<Double> {
             return text.split(SEPARATOR).mapNotNull { it.trim().toDoubleOrNull() }
