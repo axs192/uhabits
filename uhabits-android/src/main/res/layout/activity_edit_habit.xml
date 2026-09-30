@@ -179,6 +179,7 @@
                 android:orientation="horizontal"
                 android:baselineAligned="false">
                 <FrameLayout
+                    android:id="@+id/targetValueBox"
                     style="@style/FormOuterBox"
                     android:layout_width="0dp"
                     android:layout_weight="1">
@@ -226,6 +227,87 @@
                         />
                 </LinearLayout>
             </FrameLayout>
+
+            <!-- Progressive target -->
+            <FrameLayout
+                android:id="@+id/progressiveOuterBox"
+                style="@style/FormOuterBox">
+                <LinearLayout style="@style/FormInnerBox">
+                    <TextView
+                        style="@style/FormLabel"
+                        android:text="@string/progressive_target" />
+                    <TextView
+                        style="@style/FormDropdown"
+                        android:id="@+id/progressivePicker"
+                        android:textColor="?attr/contrast100"
+                        />
+                </LinearLayout>
+            </FrameLayout>
+
+            <LinearLayout
+                android:id="@+id/scheduleOuterBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:baselineAligned="false">
+                    <FrameLayout
+                        style="@style/FormOuterBox"
+                        android:layout_width="0dp"
+                        android:layout_weight="1">
+                        <LinearLayout style="@style/FormInnerBox">
+                            <TextView
+                                style="@style/FormLabel"
+                                android:text="@string/schedule_start_date" />
+                            <TextView
+                                style="@style/FormDropdown"
+                                android:id="@+id/scheduleStartPicker"
+                                android:textColor="?attr/contrast100"
+                                />
+                        </LinearLayout>
+                    </FrameLayout>
+                    <FrameLayout
+                        style="@style/FormOuterBox"
+                        android:layout_width="0dp"
+                        android:layout_weight="1">
+                        <LinearLayout style="@style/FormInnerBox">
+                            <TextView
+                                style="@style/FormLabel"
+                                android:text="@string/schedule_stage_length" />
+                            <TextView
+                                style="@style/FormDropdown"
+                                android:id="@+id/stageLengthPicker"
+                                android:textColor="?attr/contrast100"
+                                />
+                        </LinearLayout>
+                    </FrameLayout>
+                </LinearLayout>
+                <FrameLayout style="@style/FormOuterBox">
+                    <LinearLayout style="@style/FormInnerBox">
+                        <TextView
+                            style="@style/FormLabel"
+                            android:text="@string/schedule_stage_targets" />
+                        <LinearLayout
+                            android:id="@+id/stagesContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:paddingTop="8dp" />
+                        <TextView
+                            android:id="@+id/addStageButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="16dp"
+                            android:text="@string/schedule_add_stage"
+                            android:textColor="?attr/contrast100"
+                            android:textSize="@dimen/regularTextSize" />
+                    </LinearLayout>
+                </FrameLayout>
+            </LinearLayout>
 
 
             <!-- Reminder -->

@@ -291,6 +291,10 @@ class HabitCardView(
             units = h.unit
             targetType = h.targetType
             threshold = h.targetValue
+            thresholdProvider = when (h.targetSchedule) {
+                null -> null
+                else -> { date -> h.targetValueOn(date) / h.frequency.denominator }
+            }
             visibility = when (h.isNumerical) {
                 true -> View.VISIBLE
                 false -> View.GONE

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/stageLabel"
+        android:layout_width="96dp"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp"
+        android:textColor="?attr/contrast60"
+        android:textSize="@dimen/regularTextSize" />
+
+    <EditText
+        android:id="@+id/stageInput"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:background="@color/transparent"
+        android:hint="@string/example_target"
+        android:inputType="numberDecimal"
+        android:maxLines="1"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:textSize="@dimen/regularTextSize" />
+
+    <TextView
+        android:id="@+id/stageRemoveButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:contentDescription="@string/schedule_remove_stage"
+        android:gravity="center"
+        android:text="✕"
+        android:textColor="?attr/contrast60"
+        android:textSize="@dimen/regularTextSize" />
+</LinearLayout>

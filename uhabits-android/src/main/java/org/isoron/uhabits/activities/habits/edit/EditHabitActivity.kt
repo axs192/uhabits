@@ -20,14 +20,17 @@
 package org.isoron.uhabits.activities.habits.edit
 
 import android.annotation.SuppressLint
+import android.app.DatePickerDialog
 import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.os.Bundle
 import android.text.Html
+import android.text.InputType
 import android.text.Spanned
 import android.text.format.DateFormat
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.EditText
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -35,6 +38,8 @@ import androidx.fragment.app.DialogFragment
 import com.android.datetimepicker.time.RadialPickerLayout
 import com.android.datetimepicker.time.TimePickerDialog
 import org.isoron.platform.gui.toInt
+import org.isoron.platform.time.LocalDate
+import org.isoron.platform.time.getToday
 import org.isoron.uhabits.HabitsApplication
 import org.isoron.uhabits.R
 import org.isoron.uhabits.activities.AndroidThemeSwitcher
@@ -50,14 +55,18 @@ import org.isoron.uhabits.core.models.HabitType
 import org.isoron.uhabits.core.models.NumericalHabitType
 import org.isoron.uhabits.core.models.PaletteColor
 import org.isoron.uhabits.core.models.Reminder
+import org.isoron.uhabits.core.models.TargetSchedule
 import org.isoron.uhabits.core.models.WeekdayList
 import org.isoron.uhabits.databinding.ActivityEditHabitBinding
+import org.isoron.uhabits.databinding.EditHabitStageRowBinding
 import org.isoron.uhabits.utils.applyBottomInset
 import org.isoron.uhabits.utils.applyRootViewInsets
 import org.isoron.uhabits.utils.applyToolbarInsets
 import org.isoron.uhabits.utils.dismissCurrentAndShow
 import org.isoron.uhabits.utils.formatTime
 import org.isoron.uhabits.utils.toFormattedString
+import java.util.Date
+import java.util.TimeZone
 
 fun formatFrequency(freqNum: Int, freqDen: Int, resources: Resources) = when {
     freqNum == 1 && (freqDen == 30 || freqDen == 31) -> resources.getString(R.string.every_month)
@@ -86,9 +95,14 @@ class EditHabitActivity : AppCompatActivity() {
     var reminderMin = -1
     var reminderDays: WeekdayList = WeekdayList.EVERY_DAY
     var targetType = NumericalHabitType.AT_LEAST
+    var isProgressive = false
+    var scheduleStart: LocalDate = getToday()
+    var stageLength = 7
+    private val stageRows = mutableListOf<EditHabitStageRowBinding>()
 
     override fun onCreate(state: Bundle?) {
         super.onCreate(state)
+        var stageTexts = listOf<String>()
 
         val component = (application as HabitsApplication).component
         themeSwitcher = AndroidThemeSwitcher(this, component.preferences)
@@ -119,6 +133,12 @@ class EditHabitActivity : AppCompatActivity() {
             binding.notesInput.setText(habit.description)
             binding.unitInput.setText(habit.unit)
             binding.targetInput.setText(habit.targetValue.toString())
+            habit.targetSchedule?.let {
+                isProgressive = true
+                scheduleStart = it.start
+                stageLength = it.stageLength
+                stageTexts = it.values.map { value -> formatStageValue(value) }
+            }
         } else {
             habitType = HabitType.fromInt(intent.getIntExtra("habitType", HabitType.YES_NO.value))
         }
@@ -132,6 +152,10 @@ class EditHabitActivity : AppCompatActivity() {
             reminderHour = state.getInt("reminderHour")
             reminderMin = state.getInt("reminderMin")
             reminderDays = WeekdayList(state.getInt("reminderDays"))
+            isProgressive = state.getBoolean("isProgressive")
+            scheduleStart = LocalDate(state.getInt("scheduleStart"))
+            stageLength = state.getInt("stageLength")
+            stageTexts = state.getStringArrayList("stageTexts") ?: listOf()
         }
 
         updateColors()
@@ -141,6 +165,8 @@ class EditHabitActivity : AppCompatActivity() {
                 binding.unitOuterBox.visibility = View.GONE
                 binding.targetOuterBox.visibility = View.GONE
                 binding.targetTypeOuterBox.visibility = View.GONE
+                binding.progressiveOuterBox.visibility = View.GONE
+                binding.scheduleOuterBox.visibility = View.GONE
             }
             HabitType.NUMERICAL -> {
                 binding.nameInput.hint = getString(R.string.measurable_short_example)
@@ -191,6 +217,33 @@ class EditHabitActivity : AppCompatActivity() {
             }
             val dialog = builder.create()
             dialog.dismissCurrentAndShow()
+        }
+
+        stageTexts.forEach { addStageRow(it) }
+        populateSchedule()
+        binding.progressivePicker.setOnClickListener {
+            isProgressive = !isProgressive
+            if (isProgressive && stageRows.isEmpty()) {
+                addStageRow(binding.targetInput.text.toString())
+            }
+            populateSchedule()
+        }
+        binding.scheduleStartPicker.setOnClickListener {
+            DatePickerDialog(
+                this,
+                { _, year, month, day ->
+                    scheduleStart = LocalDate(year, month + 1, day)
+                    populateSchedule()
+                },
+                scheduleStart.year,
+                scheduleStart.month - 1,
+                scheduleStart.day
+            ).show()
+        }
+        binding.stageLengthPicker.setOnClickListener { showStageLengthPicker() }
+        binding.addStageButton.setOnClickListener {
+            addStageRow("").stageInput.requestFocus()
+            populateSchedule()
         }
 
         binding.numericalFrequencyPicker.setOnClickListener {
@@ -282,7 +335,14 @@ class EditHabitActivity : AppCompatActivity() {
 
         habit.frequency = Frequency(freqNum, freqDen)
         if (habitType == HabitType.NUMERICAL) {
-            habit.targetValue = binding.targetInput.text.toString().toDouble()
+            if (isProgressive) {
+                val values = stageRows.map { it.stageInput.text.toString().toDouble() }
+                habit.targetSchedule = TargetSchedule(scheduleStart, stageLength, values)
+                habit.targetValue = values.first()
+            } else {
+                habit.targetSchedule = null
+                habit.targetValue = binding.targetInput.text.toString().toDouble()
+            }
             habit.targetType = targetType
             habit.unit = binding.unitInput.text.trim().toString()
         }
@@ -311,7 +371,14 @@ class EditHabitActivity : AppCompatActivity() {
             binding.nameInput.error = getFormattedValidationError(R.string.validation_cannot_be_blank)
             isValid = false
         }
-        if (habitType == HabitType.NUMERICAL) {
+        if (habitType == HabitType.NUMERICAL && isProgressive) {
+            for (row in stageRows) {
+                if (row.stageInput.text.toString().toDoubleOrNull() == null) {
+                    row.stageInput.error = getString(R.string.validation_cannot_be_blank)
+                    isValid = false
+                }
+            }
+        } else if (habitType == HabitType.NUMERICAL) {
             if (binding.targetInput.text.isEmpty()) {
                 binding.targetInput.error = getString(R.string.validation_cannot_be_blank)
                 isValid = false
@@ -343,6 +410,87 @@ class EditHabitActivity : AppCompatActivity() {
             30 -> getString(R.string.every_month)
             else -> "$freqNum/$freqDen"
         }
+    }
+
+    private fun populateSchedule() {
+        binding.progressivePicker.text = getString(
+            if (isProgressive) R.string.progressive_target_on else R.string.progressive_target_off
+        )
+        if (habitType != HabitType.NUMERICAL) return
+        if (isProgressive && stageRows.isEmpty()) addStageRow("")
+        binding.scheduleOuterBox.visibility = if (isProgressive) View.VISIBLE else View.GONE
+        binding.targetValueBox.visibility = if (isProgressive) View.GONE else View.VISIBLE
+
+        val dateFormat = java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM)
+        dateFormat.timeZone = TimeZone.getTimeZone("UTC")
+        binding.scheduleStartPicker.text = dateFormat.format(Date(scheduleStart.unixTime))
+        binding.stageLengthPicker.text = formatStageLength(stageLength)
+
+        val labelRes = if (stageLength == 7) R.string.schedule_week_n else R.string.schedule_stage_n
+        stageRows.forEachIndexed { index, row ->
+            row.stageLabel.text = getString(labelRes, index + 1)
+            row.stageRemoveButton.visibility = if (stageRows.size > 1) View.VISIBLE else View.INVISIBLE
+        }
+    }
+
+    private fun addStageRow(text: String): EditHabitStageRowBinding {
+        val row = EditHabitStageRowBinding.inflate(layoutInflater, binding.stagesContainer, true)
+        row.stageInput.setText(text)
+        row.stageRemoveButton.setOnClickListener {
+            stageRows.remove(row)
+            binding.stagesContainer.removeView(row.root)
+            populateSchedule()
+        }
+        stageRows.add(row)
+        return row
+    }
+
+    private fun formatStageValue(value: Double): String {
+        return if (value == value.toLong().toDouble()) value.toLong().toString() else value.toString()
+    }
+
+    private fun formatStageLength(days: Int) = when (days) {
+        1 -> getString(R.string.schedule_length_one_day)
+        7 -> getString(R.string.schedule_length_one_week)
+        14 -> getString(R.string.schedule_length_two_weeks)
+        28 -> getString(R.string.schedule_length_four_weeks)
+        else -> getString(R.string.schedule_length_days, days)
+    }
+
+    private fun showStageLengthPicker() {
+        val presets = intArrayOf(1, 7, 14, 28)
+        val arrayAdapter = ArrayAdapter<String>(this, android.R.layout.select_dialog_item)
+        presets.forEach { arrayAdapter.add(formatStageLength(it)) }
+        arrayAdapter.add(getString(R.string.schedule_length_custom))
+        AlertDialog.Builder(this)
+            .setAdapter(arrayAdapter) { dialog, which ->
+                if (which < presets.size) {
+                    stageLength = presets[which]
+                    populateSchedule()
+                } else {
+                    showCustomStageLengthDialog()
+                }
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun showCustomStageLengthDialog() {
+        val input = EditText(this)
+        input.inputType = InputType.TYPE_CLASS_NUMBER
+        input.setText(stageLength.toString())
+        AlertDialog.Builder(this)
+            .setTitle(R.string.schedule_length_custom_title)
+            .setView(input)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val days = input.text.toString().toIntOrNull()
+                if (days != null && days > 0) {
+                    stageLength = days
+                    populateSchedule()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun populateTargetType() {
@@ -378,6 +526,10 @@ class EditHabitActivity : AppCompatActivity() {
             putInt("reminderHour", reminderHour)
             putInt("reminderMin", reminderMin)
             putInt("reminderDays", reminderDays.toInteger())
+            putBoolean("isProgressive", isProgressive)
+            putInt("scheduleStart", scheduleStart.daysSince2000)
+            putInt("stageLength", stageLength)
+            putStringArrayList("stageTexts", ArrayList(stageRows.map { it.stageInput.text.toString() }))
         }
     }
 }
