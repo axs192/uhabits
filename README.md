@@ -18,6 +18,30 @@ source.
   <a href="https://f-droid.org/app/org.isoron.uhabits"><img alt="Get it on F-Droid" src="https://f-droid.org/badge/get-it-on.png" height="80px"/></a>
 </p>
 
+## About this fork
+
+This is a personal fork of Loop that adds **goals**. Loop's habits are open-ended;
+a goal is finite. It has a start date, a series of stages each with its own target
+(for example 10 push-ups in week 1, 20 in week 2, 25 in week 3), and it ends when
+the last stage ends.
+
+* **Create a goal** from the "+" button, next to "Yes or No" and "Measurable".
+* **Track it** in the habit list, where each day is judged against its own stage.
+  The goal card on the habit page shows a bar for each stage and the total.
+* **See the result** once it ends: the list shows *Achieved* (the total reached the
+  sum of the stage targets) or *Not achieved*, and the goal card shows how many
+  stages were met.
+* **Goal widget**: two bars on the home screen, the total done so far and the days
+  used, so you can see at a glance whether you're keeping pace.
+
+The fork installs **alongside** official Loop under its own application ID
+(`io.github.axs192.uhabits`, shown as "Habits (fork)"). To move your data, export a
+full backup from Loop and import it in the fork. Backups made by the fork can't be
+imported back into official Loop. There are no published builds. Build it with
+`./gradlew :uhabits-android:installDebug` (see [build instructions][build]).
+
+Everything below is the upstream Loop README.
+
 ## Screenshots
 
 [![Main screen][screen1th]][screen1]
