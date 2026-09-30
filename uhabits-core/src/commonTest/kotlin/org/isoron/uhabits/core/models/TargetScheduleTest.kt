@@ -1,5 +1,6 @@
 package org.isoron.uhabits.core.models
 
+import org.isoron.platform.time.DayOfWeek
 import org.isoron.platform.time.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -72,6 +73,24 @@ class TargetScheduleTest {
         assertEquals(listOf(10.0), TargetSchedule.parseValues("10"))
         assertEquals(listOf(), TargetSchedule.parseValues(""))
         assertEquals(listOf(10.0, 20.0), TargetSchedule.parseValues("10;abc;20"))
+    }
+
+    @Test
+    fun testAlignStart_snapsWeeklyStagesToFirstDayOfWeek() {
+        val wednesday = LocalDate(2026, 9, 16)
+        val monday = LocalDate(2026, 9, 14)
+        val sunday = LocalDate(2026, 9, 13)
+        assertEquals(monday, TargetSchedule.alignStart(wednesday, 7, DayOfWeek.MONDAY))
+        assertEquals(monday, TargetSchedule.alignStart(wednesday, 14, DayOfWeek.MONDAY))
+        assertEquals(sunday, TargetSchedule.alignStart(wednesday, 28, DayOfWeek.SUNDAY))
+        assertEquals(monday, TargetSchedule.alignStart(monday, 7, DayOfWeek.MONDAY))
+    }
+
+    @Test
+    fun testAlignStart_leavesOtherLengthsAlone() {
+        val wednesday = LocalDate(2026, 9, 16)
+        assertEquals(wednesday, TargetSchedule.alignStart(wednesday, 1, DayOfWeek.MONDAY))
+        assertEquals(wednesday, TargetSchedule.alignStart(wednesday, 10, DayOfWeek.MONDAY))
     }
 
     @Test

@@ -138,6 +138,7 @@ class EditHabitActivity : AppCompatActivity() {
                 scheduleStart = it.start
                 stageLength = it.stageLength
                 stageTexts = it.values.map { value -> formatStageValue(value) }
+                alignScheduleStart()
             }
         } else {
             habitType = HabitType.fromInt(intent.getIntExtra("habitType", HabitType.YES_NO.value))
@@ -223,6 +224,7 @@ class EditHabitActivity : AppCompatActivity() {
         populateSchedule()
         binding.progressivePicker.setOnClickListener {
             isProgressive = !isProgressive
+            if (isProgressive) alignScheduleStart()
             if (isProgressive && stageRows.isEmpty()) {
                 addStageRow(binding.targetInput.text.toString())
             }
@@ -233,6 +235,7 @@ class EditHabitActivity : AppCompatActivity() {
                 this,
                 { _, year, month, day ->
                     scheduleStart = LocalDate(year, month + 1, day)
+                    alignScheduleStart()
                     populateSchedule()
                 },
                 scheduleStart.year,
@@ -434,6 +437,15 @@ class EditHabitActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Weekly stages start on the first day of the week, so that calendar
+     * weeks line up with stages.
+     */
+    private fun alignScheduleStart() {
+        val firstWeekday = (application as HabitsApplication).component.preferences.firstWeekday
+        scheduleStart = TargetSchedule.alignStart(scheduleStart, stageLength, firstWeekday)
+    }
+
     private fun addStageRow(text: String): EditHabitStageRowBinding {
         val row = EditHabitStageRowBinding.inflate(layoutInflater, binding.stagesContainer, true)
         row.stageInput.setText(text)
@@ -467,6 +479,7 @@ class EditHabitActivity : AppCompatActivity() {
             .setAdapter(arrayAdapter) { dialog, which ->
                 if (which < presets.size) {
                     stageLength = presets[which]
+                    alignScheduleStart()
                     populateSchedule()
                 } else {
                     showCustomStageLengthDialog()
@@ -487,6 +500,7 @@ class EditHabitActivity : AppCompatActivity() {
                 val days = input.text.toString().toIntOrNull()
                 if (days != null && days > 0) {
                     stageLength = days
+                    alignScheduleStart()
                     populateSchedule()
                 }
             }
