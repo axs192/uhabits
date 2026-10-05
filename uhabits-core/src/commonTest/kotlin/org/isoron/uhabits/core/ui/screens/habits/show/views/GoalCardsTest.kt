@@ -15,6 +15,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -72,6 +73,45 @@ class GoalCardsTest : BaseUnitTest() {
         goal.recompute()
         state = GoalCardPresenter.buildState(goal, theme)
         assertEquals(21, state.daysUsed)
+    }
+
+    @Test
+    fun testGoalCard_currentStage() {
+        val state = GoalCardPresenter.buildState(goal, theme)
+        assertEquals(20.0, state.currentStageTarget)
+        assertEquals(14.0, state.currentStageActual)
+    }
+
+    @Test
+    fun testGoalCard_thisMonth() {
+        // January holds the first two stages and 6 of the 7 days of the third
+        val state = GoalCardPresenter.buildState(goal, theme)
+        assertEquals(10.0 + 20.0 + 30.0 * 6 / 7, state.monthTarget!!, 1e-9)
+        assertEquals(28.0, state.monthActual)
+    }
+
+    @Test
+    fun testGoalCard_thisMonthCountsFromTheFirst() {
+        // The goal began in December; December's entries don't count
+        goal.targetSchedule = TargetSchedule(today.minus(27), 7, listOf(7.0, 7.0, 7.0, 7.0, 7.0))
+        goal.originalEntries.add(Entry(today.minus(25), 5000))
+        goal.recompute()
+        val state = GoalCardPresenter.buildState(goal, theme)
+        assertEquals(31.0, state.monthTarget!!, 1e-9)
+        assertEquals(28.0, state.monthActual)
+    }
+
+    @Test
+    fun testGoalCard_noCurrentPeriodsOutsideGoal() {
+        for (start in listOf(today.plus(2), today.minus(30))) {
+            goal.targetSchedule = TargetSchedule(start, 7, listOf(10.0, 20.0, 30.0))
+            goal.recompute()
+            val state = GoalCardPresenter.buildState(goal, theme)
+            assertNull(state.currentStageTarget)
+            assertNull(state.currentStageActual)
+            assertNull(state.monthTarget)
+            assertNull(state.monthActual)
+        }
     }
 
     @Test

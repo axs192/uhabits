@@ -15,7 +15,8 @@ import org.isoron.uhabits.core.ui.views.WidgetTheme
 import org.isoron.uhabits.widgets.views.GraphWidgetView
 
 /**
- * Shows a goal's current stage and its overall total. Once the goal has
+ * Shows a goal's current stage, the current month, its overall total and
+ * the days used. Once the goal has
  * ended, it shows the result instead.
  */
 class GoalWidget(
@@ -45,15 +46,45 @@ class GoalWidget(
             }
         )
 
-        // Two rows: what's done (highlighted in the habit colour) and the days used,
+        // While the goal is in progress, the current stage and month come first. Then
+        // what's done overall (highlighted in the habit colour) and the days used,
         // whose remainder is the number of days left
+        val color = theme.color(habit.color).toInt()
+        val labels = mutableListOf<String>()
+        val targets = mutableListOf<Double>()
+        val values = mutableListOf<Double>()
+        val colors = mutableListOf<Int>()
+        fun addRow(label: String, target: Double, value: Double, rowColor: Int = color) {
+            labels.add(label)
+            targets.add(target)
+            values.add(value)
+            colors.add(rowColor)
+        }
+        val stageTarget = state.currentStageTarget
+        val stageActual = state.currentStageActual
+        if (stageTarget != null && stageActual != null) {
+            val stageLabel = if (state.stageLength == 7) R.string.goal_widget_this_week else R.string.goal_widget_this_stage
+            addRow(res.getString(stageLabel), stageTarget, stageActual)
+        }
+        val monthTarget = state.monthTarget
+        val monthActual = state.monthActual
+        if (monthTarget != null && monthActual != null) {
+            addRow(res.getString(R.string.goal_widget_this_month), monthTarget, monthActual)
+        }
+        addRow(res.getString(R.string.goal_total), state.totalTarget, state.totalActual)
+        addRow(
+            res.getString(R.string.goal_widget_days),
+            state.goalLengthDays.toDouble(),
+            state.daysUsed.toDouble(),
+            theme.mediumContrastTextColor.toInt()
+        )
         val chart = widgetView.dataView as TargetChart
-        chart.setColor(theme.color(habit.color).toInt())
-        chart.setBarColors(listOf(theme.color(habit.color).toInt(), theme.mediumContrastTextColor.toInt()))
+        chart.setColor(color)
+        chart.setBarColors(colors)
         chart.setAlwaysShowCompleted(true)
-        chart.setLabels(listOf(res.getString(R.string.goal_total), res.getString(R.string.goal_widget_days)))
-        chart.setTargets(listOf(state.totalTarget, state.goalLengthDays.toDouble()))
-        chart.setValues(listOf(state.totalActual, state.daysUsed.toDouble()))
+        chart.setLabels(labels)
+        chart.setTargets(targets)
+        chart.setValues(values)
     }
 
     override fun buildView(): View {
