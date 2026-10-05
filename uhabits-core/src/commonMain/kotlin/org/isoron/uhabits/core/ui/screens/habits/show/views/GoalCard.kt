@@ -3,11 +3,13 @@ package org.isoron.uhabits.core.ui.screens.habits.show.views
 import org.isoron.platform.time.LocalDate
 import org.isoron.platform.time.TruncateField
 import org.isoron.platform.time.getToday
+import org.isoron.uhabits.core.models.Entry
 import org.isoron.uhabits.core.models.GoalProgress
 import org.isoron.uhabits.core.models.GoalStatus
 import org.isoron.uhabits.core.models.Habit
 import org.isoron.uhabits.core.models.PaletteColor
 import org.isoron.uhabits.core.ui.views.Theme
+import kotlin.math.max
 
 /**
  * State of the goal card. [stageNumber] counts from one and is zero when no
@@ -29,7 +31,8 @@ data class GoalCardState(
     val totalActual: Double = 0.0,
     val stagesMet: Int = 0,
     val unit: String = "",
-    val daysLeftInStage: Int = 0
+    val monthTarget: Double? = null,
+    val monthActual: Double? = null
 ) {
     /** Number of days from the goal's start to its end. */
     val goalLengthDays: Int
@@ -46,18 +49,6 @@ data class GoalCardState(
     /** Amount logged in the stage in progress, or null when no stage is in progress. */
     val currentStageActual: Double?
         get() = stageActuals.getOrNull(stageNumber - 1)
-
-    /**
-     * Amount per day, today included, still needed to meet the current stage's
-     * target; null when no stage is in progress or the target is already met.
-     */
-    val dailyNeed: Double?
-        get() {
-            val target = currentStageTarget ?: return null
-            val actual = currentStageActual ?: return null
-            if (target <= actual || daysLeftInStage <= 0) return null
-            return (target - actual) / daysLeftInStage
-        }
 }
 
 class GoalCardPresenter {
@@ -69,6 +60,8 @@ class GoalCardPresenter {
             if (schedule == null || progress == null) {
                 return GoalCardState(isVisible = false, color = habit.color, theme = theme)
             }
+            val inProgress = progress.status == GoalStatus.IN_PROGRESS
+            val monthStart = today.startOfMonth()
             return GoalCardState(
                 isVisible = true,
                 color = habit.color,
@@ -85,8 +78,8 @@ class GoalCardPresenter {
                 totalActual = progress.totalActual,
                 stagesMet = progress.stagesMet,
                 unit = habit.unit,
-                daysLeftInStage = progress.currentStageIndex
-                    ?.let { today.daysUntil(progress.stages[it].end) + 1 } ?: 0
+                monthTarget = if (inProgress) habit.goalTargetOverDays(monthStart, monthStart.monthLength) else null,
+                monthActual = if (inProgress) habit.goalActualBetween(monthStart, today) else null
             )
         }
     }
@@ -121,3 +114,12 @@ internal fun Habit.goalTargetOverDays(start: LocalDate, days: Int): Double {
     }
     return total
 }
+
+/**
+ * Returns the amount logged from [start] to [end], counting only the days
+ * within the goal.
+ */
+internal fun Habit.goalActualBetween(start: LocalDate, end: LocalDate): Double =
+    computedEntries.getByInterval(start, end)
+        .filter { isActiveOn(it.date) && it.value != Entry.SKIP }
+        .sumOf { max(0, it.value) } / 1000.0
