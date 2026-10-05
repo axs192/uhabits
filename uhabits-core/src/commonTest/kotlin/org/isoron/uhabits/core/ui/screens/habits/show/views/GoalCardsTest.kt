@@ -15,6 +15,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -72,6 +73,47 @@ class GoalCardsTest : BaseUnitTest() {
         goal.recompute()
         state = GoalCardPresenter.buildState(goal, theme)
         assertEquals(21, state.daysUsed)
+    }
+
+    @Test
+    fun testGoalCard_currentStage() {
+        val state = GoalCardPresenter.buildState(goal, theme)
+        assertEquals(20.0, state.currentStageTarget)
+        assertEquals(14.0, state.currentStageActual)
+        assertEquals(1, state.daysLeftInStage)
+        assertEquals(6.0, state.dailyNeed)
+    }
+
+    @Test
+    fun testGoalCard_dailyNeedMidStage() {
+        goal.targetSchedule = TargetSchedule(today.minus(9), 7, listOf(10.0, 20.0, 30.0))
+        goal.recompute()
+        val state = GoalCardPresenter.buildState(goal, theme)
+        assertEquals(6.0, state.currentStageActual)
+        assertEquals(5, state.daysLeftInStage)
+        assertEquals(2.8, state.dailyNeed!!, 1e-9)
+    }
+
+    @Test
+    fun testGoalCard_dailyNeedWhenStageMet() {
+        goal.targetSchedule = TargetSchedule(today.minus(13), 7, listOf(10.0, 5.0, 30.0))
+        goal.recompute()
+        val state = GoalCardPresenter.buildState(goal, theme)
+        assertEquals(5.0, state.currentStageTarget)
+        assertNull(state.dailyNeed)
+    }
+
+    @Test
+    fun testGoalCard_noCurrentStageOutsideGoal() {
+        for (start in listOf(today.plus(2), today.minus(30))) {
+            goal.targetSchedule = TargetSchedule(start, 7, listOf(10.0, 20.0, 30.0))
+            goal.recompute()
+            val state = GoalCardPresenter.buildState(goal, theme)
+            assertNull(state.currentStageTarget)
+            assertNull(state.currentStageActual)
+            assertEquals(0, state.daysLeftInStage)
+            assertNull(state.dailyNeed)
+        }
     }
 
     @Test

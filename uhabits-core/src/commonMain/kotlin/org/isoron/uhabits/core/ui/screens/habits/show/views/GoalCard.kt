@@ -28,7 +28,8 @@ data class GoalCardState(
     val totalTarget: Double = 0.0,
     val totalActual: Double = 0.0,
     val stagesMet: Int = 0,
-    val unit: String = ""
+    val unit: String = "",
+    val daysLeftInStage: Int = 0
 ) {
     /** Number of days from the goal's start to its end. */
     val goalLengthDays: Int
@@ -37,13 +38,34 @@ data class GoalCardState(
     /** Days of the goal already behind us; together with [daysLeft] this makes [goalLengthDays]. */
     val daysUsed: Int
         get() = goalLengthDays - daysLeft
+
+    /** Target of the stage in progress, or null when no stage is in progress. */
+    val currentStageTarget: Double?
+        get() = stageTargets.getOrNull(stageNumber - 1)
+
+    /** Amount logged in the stage in progress, or null when no stage is in progress. */
+    val currentStageActual: Double?
+        get() = stageActuals.getOrNull(stageNumber - 1)
+
+    /**
+     * Amount per day, today included, still needed to meet the current stage's
+     * target; null when no stage is in progress or the target is already met.
+     */
+    val dailyNeed: Double?
+        get() {
+            val target = currentStageTarget ?: return null
+            val actual = currentStageActual ?: return null
+            if (target <= actual || daysLeftInStage <= 0) return null
+            return (target - actual) / daysLeftInStage
+        }
 }
 
 class GoalCardPresenter {
     companion object {
         fun buildState(habit: Habit, theme: Theme): GoalCardState {
             val schedule = habit.targetSchedule
-            val progress = if (habit.isGoal) GoalProgress.compute(habit, getToday()) else null
+            val today = getToday()
+            val progress = if (habit.isGoal) GoalProgress.compute(habit, today) else null
             if (schedule == null || progress == null) {
                 return GoalCardState(isVisible = false, color = habit.color, theme = theme)
             }
@@ -62,7 +84,9 @@ class GoalCardPresenter {
                 totalTarget = progress.totalTarget,
                 totalActual = progress.totalActual,
                 stagesMet = progress.stagesMet,
-                unit = habit.unit
+                unit = habit.unit,
+                daysLeftInStage = progress.currentStageIndex
+                    ?.let { today.daysUntil(progress.stages[it].end) + 1 } ?: 0
             )
         }
     }

@@ -219,6 +219,9 @@
     <string name="goal_widget_title_achieved">%1$s ✓</string>
     <string name="goal_widget_title_not_achieved">%1$s ✗</string>
     <string name="goal_widget_days">Days</string>
+    <string name="goal_widget_this_week">This week</string>
+    <string name="goal_widget_this_stage">This stage</string>
+    <string name="goal_widget_title_daily_need">%1$s · %2$s %3$s/day</string>
     <string name="no_goals">No goals found</string>
     <string name="example_question_boolean">e.g. Did you exercise today?</string>
     <string name="question">Question</string>
