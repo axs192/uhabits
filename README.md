@@ -31,8 +31,10 @@ the last stage ends.
 * **See the result** once it ends: the list shows *Achieved* (the total reached the
   sum of the stage targets) or *Not achieved*, and the goal card shows how many
   stages were met.
-* **Goal widget**: two bars on the home screen, the total done so far and the days
-  used, so you can see at a glance whether you're keeping pace.
+* **Goal widget**: bars on the home screen for this week (or the current stage),
+  this month (from the 1st), the total done so far and the days used, so you can
+  see at a glance whether you're keeping pace. Before a goal starts or after it
+  ends, only the total and days show.
 
 The fork installs **alongside** official Loop under its own application ID
 (`io.github.axs192.uhabits`, shown as "Habits (fork)"). To move your data, export a

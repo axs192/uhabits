@@ -24,7 +24,7 @@ Personal fork of [Loop Habit Tracker](https://github.com/iSoron/uhabits) (`axs19
   - Goal option in `HabitTypeDialog`, and a goal mode in `EditHabitActivity`.
   - In the list, goal days are coloured per stage and an ended goal shows Achieved or Not achieved.
   - `GoalCardView` on the habit page (the calendar Target card is hidden for goals), plus a stepped target line on the bar chart.
-  - `GoalWidget`: Total vs Days rows, picked through `GoalPickerDialog`.
+  - `GoalWidget`: This week (This stage when stages aren't 7 days), This month, Total and Days rows. Week and month show only while the goal is in progress. Picked through `GoalPickerDialog`.
 
 ## Workflow
 
